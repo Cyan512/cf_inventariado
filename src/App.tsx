@@ -1,4 +1,5 @@
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
+import { saveAs } from 'file-saver'
 import { useState, useEffect } from 'react'
 import { supabase } from './utils/supabase'
 
@@ -35,24 +36,56 @@ export default function App() {
     getProductos()
   }, [])
 
-  function exportarExcel() {
-    const datos = productos.map((producto) => ({
-      ID: producto.id,
-      Nombre: producto.nombre,
-      Cantidad: producto.cantidad,
-      Imagen: producto.image_url,
-    }))
+  async function exportarExcel() {
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Productos')
 
-    const worksheet = XLSX.utils.json_to_sheet(datos)
-    const workbook = XLSX.utils.book_new()
+    worksheet.columns = [
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'Nombre', key: 'nombre', width: 30 },
+      { header: 'Cantidad', key: 'cantidad', width: 15 },
+      { header: 'Imagen', key: 'imagen', width: 25 },
+    ]
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Productos')
+    for (let i = 0; i < productos.length; i++) {
+      const producto = productos[i]
 
-    XLSX.writeFile(workbook, 'productos.xlsx')
+      const row = worksheet.addRow({
+        id: producto.id,
+        nombre: producto.nombre,
+        cantidad: producto.cantidad,
+      })
+
+      row.height = 80
+
+      if (producto.image_url) {
+        const response = await fetch(producto.image_url)
+        const blob = await response.blob()
+
+        const arrayBuffer = await blob.arrayBuffer()
+
+        const imageId = workbook.addImage({
+          buffer: arrayBuffer,
+          extension: 'png',
+        })
+
+        worksheet.addImage(imageId, {
+          tl: { col: 3, row: i + 1 },
+          ext: { width: 80, height: 80 },
+        })
+      }
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer()
+
+    saveAs(
+      new Blob([buffer]),
+      'productos.xlsx'
+    )
   }
 
   async function subirImagenCloudinary(file: File) {
-    const formData = new FormData()
+    const formData = new FormData() 
 
     formData.append('file', file)
     formData.append(
