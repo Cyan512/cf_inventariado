@@ -218,7 +218,14 @@ export default function App() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null
+                      setImageFile(file)
+                      if (file) {
+                        const fileName = file.name.replace(/\.[^/.]+$/, '')
+                        setNombre(fileName)
+                      }
+                    }}
                     className="hidden"
                     id="file-upload"
                   />
