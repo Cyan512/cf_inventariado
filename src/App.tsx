@@ -2,6 +2,8 @@ import ExcelJS from 'exceljs'
 import { saveAs } from 'file-saver'
 import { useState, useEffect } from 'react'
 import { supabase } from './utils/supabase'
+import Lightbox from 'yet-another-react-lightbox'
+import 'yet-another-react-lightbox/styles.css'
 
 interface Producto {
   id: number
@@ -23,6 +25,8 @@ export default function App() {
   const [imagenesSeleccionadas, setImagenesSeleccionadas] = useState<ProductoTemporal[]>([])
   const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   async function getProductos() {
     const { data, error } = await supabase
@@ -335,7 +339,12 @@ export default function App() {
                           <img
                             src={producto.image_url}
                             alt={producto.nombre}
-                            className="h-12 w-12 object-cover border border-gray-200"
+                            className="h-12 w-12 object-cover border border-gray-200 cursor-pointer hover:opacity-80"
+                            onClick={() => {
+                              const index = productos.findIndex(p => p.id === producto.id)
+                              setCurrentImageIndex(index)
+                              setLightboxOpen(true)
+                            }}
                           />
                         ) : (
                           <div className="h-12 w-12 bg-gray-100 border border-gray-200 flex items-center justify-center">
@@ -357,6 +366,13 @@ export default function App() {
           )}
         </div>
       </div>
+
+      <Lightbox
+        open={lightboxOpen}
+        close={() => setLightboxOpen(false)}
+        index={currentImageIndex}
+        slides={productos.filter(p => p.image_url).map(p => ({ src: p.image_url }))}
+      />
     </div>
   )
 }
