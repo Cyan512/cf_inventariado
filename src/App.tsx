@@ -1,3 +1,4 @@
+import * as XLSX from 'xlsx'
 import { useState, useEffect } from 'react'
 import { supabase } from './utils/supabase'
 
@@ -33,6 +34,22 @@ export default function App() {
   useEffect(() => {
     getProductos()
   }, [])
+
+  function exportarExcel() {
+    const datos = productos.map((producto) => ({
+      ID: producto.id,
+      Nombre: producto.nombre,
+      Cantidad: producto.cantidad,
+      Imagen: producto.image_url,
+    }))
+
+    const worksheet = XLSX.utils.json_to_sheet(datos)
+    const workbook = XLSX.utils.book_new()
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Productos')
+
+    XLSX.writeFile(workbook, 'productos.xlsx')
+  }
 
   async function subirImagenCloudinary(file: File) {
     const formData = new FormData()
@@ -110,6 +127,12 @@ export default function App() {
               <h1 className="text-xl font-semibold text-gray-900">Sistema de Inventario</h1>
               <p className="text-sm text-gray-500 mt-0.5">Gestión de productos</p>
             </div>
+            <button
+              onClick={exportarExcel}
+              className="px-4 py-2 bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors"
+            >
+              Exportar Excel
+            </button>
             <button
               onClick={() => setShowForm(!showForm)}
               className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
